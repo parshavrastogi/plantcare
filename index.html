@@ -28,9 +28,9 @@
 
     <script>
         // Connect to the EMQX broker using WebSockets port 8083 or 8084(SSL)
-        const broker = 'wss://broker.emqx.io:8084/mqtt';
-        const topic_sub = "myuniqueesp32project/led/status";
-        const topic_pub = "myuniqueesp32project/led/control";
+        const broker = 'wss://broker.hivemq.com:8884/mqtt';
+        const topic_sub = "parshproject123/led/status";
+        const topic_pub = "parshproject123/led/control";
 
         const client = mqtt.connect(broker);
 
