@@ -1,9 +1,16 @@
 {
-     "short_name": "ESP32 Remote",
-     "name": "ESP32 Global Controller",
-     "start_url": "index.html",
-     "background_color": "#121212",
-     "theme_color": "#121212",
-     "display": "standalone",
-     "orientation": "portrait"
-   }
+  "short_name": "PlantCare",
+  "name": "Plant Care Control Center",
+  "icons": [
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ],
+  "start_url": "/plantcare/",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "display": "standalone",
+  "orientation": "portrait"
+}
