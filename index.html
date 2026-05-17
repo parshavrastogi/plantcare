@@ -35,16 +35,23 @@
 
     <script>
         // Your explicit Firebase Configuration
-        const firebaseConfig = {
-            databaseURL: "https://plant-4db40-default-rtdb.firebaseio.com/"
-        };
+     // Your explicit Firebase Configuration
+     const firebaseConfig = {
+           apiKey: "AIzaSyCGYiqhSXRExn2u-6U33arB1PFo_ahj5zQ",
+           authDomain: "plant-4db40.firebaseapp.com",
+           databaseURL: "https://plant-4db40-default-rtdb.firebaseio.com",
+           projectId: "plant-4db40",
+           storageBucket: "plant-4db40.firebasestorage.app",
+           messagingSenderId: "363961989306",
+        appId: "1:363961989306:web:7f9320f6e195399943aa83"
+};
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+// Initialize Firebase (Using the v8 script syntax loaded at the top of your file)
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-        // Reference to our control path in the database tree
-        const ledRef = database.ref('plantcare/led_trigger');
+// Reference to our control path in the database tree
+    const ledRef = database.ref('plantcare/led_trigger');
 
         // Realtime listener: Whenever the database changes, update the web UI instantly
         ledRef.on('value', (snapshot) => {
