@@ -1,16 +1,18 @@
 {
-  "short_name": "PlantCare",
-  "name": "Plant Care Control Center",
-  "icons": [
-    {
-      "src": "icon.png",
-      "type": "image/png",
-      "sizes": "192x192"
+  "plantcare": {
+    "control": {
+      "pump_state": 0
+    },
+    "status": {
+      "last_sync": 142580,
+      "message": "SYSTEM_OK"
+    },
+    "telemetry": {
+      "soil_filtered": 1420.5,
+      "soil_moisture_pct": 69.3,
+      "soil_raw": 1435,
+      "water_distance_cm": 12.4,
+      "water_tank_pct": 81.5
     }
-  ],
-  "start_url": "/plantcare/",
-  "background_color": "#121212",
-  "theme_color": "#121212",
-  "display": "standalone",
-  "orientation": "portrait"
+  }
 }

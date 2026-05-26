@@ -3,76 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plant Care Dashboard</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="manifest" href="manifest.json">
+    <title>Greenhouse IoT Telemetry Hub</title>
     
-    <!-- Official Google Firebase SDK Libraries -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background: #121212; color: #fff; }
-        .btn { padding: 20px 40px; font-size: 22px; cursor: pointer; border-radius: 12px; border: none; margin: 10px; font-weight: bold; transition: 0.2s; }
-        .on-btn { background-color: #2ecc71; color: white; }
-        .on-btn:active { background-color: #27ae60; }
-        .off-btn { background-color: #e74c3c; color: white; }
-        .off-btn:active { background-color: #c0392b; }
-        #status { font-size: 20px; color: #aaa; margin-top: 30px; }
-        .highlight { color: #3498db; font-weight: bold; }
+        :root {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-green: #10b981;
+            --accent-blue: #0ea5e9;
+            --accent-red: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        header {
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { font-size: 1.75rem; font-weight: 600; }
+        
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            background: #334155;
+            text-transform: uppercase;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .card-title {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        /* Progress Bar Styling */
+        .progress-container {
+            background-color: #334155;
+            border-radius: 8px;
+            height: 12px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease-out;
+        }
+
+        #soil-bar { background-color: var(--accent-green); }
+        #tank-bar { background-color: var(--accent-blue); }
+
+        .meta-data {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Pump Controller Card Specifics */
+        .pump-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .pump-indicator {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: #334155;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .pump-on {
+            background-color: var(--accent-blue);
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
 
-    <h2>Plant Care Ecosystem</h2>
-    <p>Secure Google Firebase Infrastructure Bypass</p>
+    <div class="dashboard-container">
+        <header>
+            <div>
+                <h1>Greenhouse Ecosystem Monitoring</h1>
+                <p class="meta-data" id="sync-time">Waiting for data handshake...</p>
+            </div>
+            <div class="status-badge" id="system-status">Offline</div>
+        </header>
 
-    <button class="btn on-btn" onclick="setLedStatus(1)">TURN ON</button>
-    <button class="btn off-btn" onclick="setLedStatus(0)">TURN OFF</button>
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">Soil Moisture Content</div>
+                <div class="metric-value" id="soil-text">0.0%</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="soil-bar"></div>
+                </div>
+                <div class="meta-data" id="soil-raw">Raw Signal: --</div>
+            </div>
 
-    <div id="status">Database Sync: <span id="db-state" class="highlight">Connecting...</span></div>
+            <div class="card">
+                <div class="card-title">Water Reservoir Level</div>
+                <div class="metric-value" id="tank-text">0.0%</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="tank-bar"></div>
+                </div>
+                <div class="meta-data" id="tank-raw">Distance: -- cm</div>
+            </div>
+
+            <div class="card pump-card">
+                <div class="card-title">Irrigation Motor Status</div>
+                <div class="pump-indicator" id="pump-node">💧</div>
+                <div style="font-weight: bold; font-size: 1.1rem;" id="pump-text">PUMP IDLE</div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // Your explicit Firebase Configuration
-     // Your explicit Firebase Configuration
-     const firebaseConfig = {
-           apiKey: "AIzaSyCGYiqhSXRExn2u-6U33arB1PFo_ahj5zQ",
-           authDomain: "plant-4db40.firebaseapp.com",
-           databaseURL: "https://plant-4db40-default-rtdb.firebaseio.com",
-           projectId: "plant-4db40",
-           storageBucket: "plant-4db40.firebasestorage.app",
-           messagingSenderId: "363961989306",
-        appId: "1:363961989306:web:7f9320f6e195399943aa83"
-};
+        // ============================================================
+        //  FIREBASE CONFIGURATION
+        // ============================================================
+        // These exactly match the real-time target configuration within your ESP32 firmware
+        const firebaseConfig = {
+            apiKey: "AIzaSyCGYiqhSXRExn2u-6U33arB1PFo_ahj5zQ",
+            databaseURL: "https://plant-4db40-default-rtdb.firebaseio.com"
+        };
 
-// Initialize Firebase (Using the v8 script syntax loaded at the top of your file)
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-// Reference to our control path in the database tree
-    const ledRef = database.ref('plantcare/led_trigger');
+        // Reference target node matching structural serializations from micro-controller
+        const dataRef = database.ref('/plantcare');
 
-        // Realtime listener: Whenever the database changes, update the web UI instantly
-        ledRef.on('value', (snapshot) => {
-            const val = snapshot.val();
-            if (val === 1) {
-                document.getElementById('db-state').innerHTML = "LED is ON";
-                document.getElementById('db-state').style.color = "#2ecc71";
-            } else if (val === 0) {
-                document.getElementById('db-state').innerHTML = "LED is OFF";
-                document.getElementById('db-state').style.color = "#e74c3c";
-            } else {
-                document.getElementById('db-state').innerHTML = "Awaiting System Init...";
+        // ============================================================
+        //  REAL-TIME DATA STREAM LISTENER
+        // ============================================================
+        dataRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            
+            if (data) {
+                // Parse Data Trees Safely
+                const telemetry = data.telemetry || {};
+                const control = data.control || {};
+                const status = data.status || {};
+
+                // 1. Update Soil Moisture Cards
+                const soilPct = telemetry.soil_moisture_pct !== undefined ? telemetry.soil_moisture_pct : 0;
+                document.getElementById('soil-text').innerText = `${soilPct}%`;
+                document.getElementById('soil-bar').style.width = `${soilPct}%`;
+                document.getElementById('soil-raw').innerText = `Filtered Signal Index: ${telemetry.soil_filtered || '--'}`;
+
+                // 2. Update Water Tank Level Cards
+                const tankPct = telemetry.water_tank_pct !== undefined ? telemetry.water_tank_pct : 0;
+                document.getElementById('tank-text').innerText = `${tankPct}%`;
+                document.getElementById('tank-bar').style.width = `${tankPct}%`;
+                document.getElementById('tank-raw').innerText = `Sensory Boundary: ${telemetry.water_distance_cm || '--'} cm`;
+
+                // 3. Update Pump Actuator Graphic
+                const isPumping = control.pump_state === 1;
+                const pumpNode = document.getElementById('pump-node');
+                const pumpText = document.getElementById('pump-text');
+                
+                if (isPumping) {
+                    pumpNode.classList.add('pump-on');
+                    pumpText.innerText = "ACTIVELY WATERING";
+                    pumpText.style.color = "#0ea5e9";
+                } else {
+                    pumpNode.classList.remove('pump-on');
+                    pumpText.innerText = "PUMP IDLE";
+                    pumpText.style.color = "#94a3b8";
+                }
+
+                // 4. System Operational Messaging Routing
+                const statusBadge = document.getElementById('system-status');
+                const currentMsg = status.message || "SYSTEM_OK";
+                statusBadge.innerText = currentMsg.replace(/_/g, ' ');
+
+                // Adjust color theme of system status badge based on error flag messages
+                if (currentMsg === "SYSTEM_OK" || currentMsg === "IRRIGATING") {
+                    statusBadge.style.backgroundColor = "var(--accent-green)";
+                    statusBadge.style.color = "#0f172a";
+                } else if (currentMsg === "TANK_LOW_REFILL") {
+                    statusBadge.style.backgroundColor = "var(--accent-red)";
+                    statusBadge.style.color = "#ffffff";
+                } else {
+                    statusBadge.style.backgroundColor = "#eab308"; // Warning Yellow
+                    statusBadge.style.color = "#0f172a";
+                }
+
+                // 5. Sync Timestamp Calculation
+                const date = new Date();
+                document.getElementById('sync-time').innerText = `Last Pipeline Stream Synchronization: ${date.toLocaleTimeString()}`;
             }
+        }, (error) => {
+            console.error("Firebase Read Access Interrupted: ", error);
+            document.getElementById('system-status').innerText = "AUTH ERROR";
+            document.getElementById('system-status').style.backgroundColor = "var(--accent-red)";
         });
-
-        // Function execution to change database values on button clicks
-        function setLedStatus(state) {
-            ledRef.set(state).catch(error => {
-                alert("Database write failed: " + error.message);
-            });
-        }
     </script>
 </body>
 </html>
